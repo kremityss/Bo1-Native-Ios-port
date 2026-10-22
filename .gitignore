@@ -1,0 +1,22 @@
+.DS_Store
+__pycache__/
+*.pyc
+.build/
+DerivedData/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+BO1NativeFoundation.xcodeproj/
+Assets/scene.rvn
+local_install_inventory.json
+installation_inventory.json
+*.ipa
+Payload/
+# Keep proprietary game content out of the repo:
+game_files/
+extracted/
+worlds/
+*.ff
+*.iwd
+*.iwi
+*.dll
+*.exe
