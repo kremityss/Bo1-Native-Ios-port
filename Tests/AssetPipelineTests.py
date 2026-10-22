@@ -8,6 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Tools'))
 from gltf_to_raven import MAGIC, load_gltf, collect, write_scene
 from scan_install import scan
+from build_level import build_metadata
 
 
 class PipelineTests(unittest.TestCase):
@@ -33,6 +34,23 @@ class PipelineTests(unittest.TestCase):
             self.assertEqual(content[:8], MAGIC)
             self.assertEqual(struct.unpack_from('<II', content, 8), (3,3))
             self.assertEqual(len(content), 16+3*32+3*4)
+
+    def test_level_node_markers(self):
+        raw = struct.pack('<24f', *[float(i) for i in (0,0,0, 1,0,0, 0,2,0, 0,0,2, 1,2,1, 1,0,2, 1,1,1, 0,1,1)])
+        doc = {'accessors':[{'bufferView':0,'componentType':5126,'count':8,'type':'VEC3'}],
+               'bufferViews':[{'buffer':0,'byteLength':len(raw)}],
+               'meshes':[{'primitives':[{'attributes':{'POSITION':0}}]}],
+               'nodes':[{'name':'SPAWN_PLAYER','translation':[2,1.65,5]},
+                        {'name':'COL_WALL','mesh':0,'translation':[10,0,0]},
+                        {'name':'TARGET_A','mesh':0,'translation':[0,0,-5]}],
+               'scenes':[{'nodes':[0,1,2]}], 'scene':0}
+        result = build_metadata(doc,[raw],name='Test scene')
+        self.assertEqual(result['name'],'Test scene')
+        self.assertEqual(result['playerSpawn'],[2,1.65,5])
+        self.assertEqual(result['boxes'][0]['min'],[10.0,0.0,0.0])
+        self.assertEqual(result['boxes'][0]['max'],[11.0,2.0,2.0])
+        self.assertEqual(result['targets'][0]['min'],[0.0,0.0,-5.0])
+        self.assertEqual(result['targets'][0]['max'],[1.0,2.0,-3.0])
 
     def test_scan_inventory(self):
         with tempfile.TemporaryDirectory() as d:

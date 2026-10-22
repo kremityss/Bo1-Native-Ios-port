@@ -72,3 +72,23 @@ python3 Tools/generate_demo.py
 5. Licensing and permission for any redistribution of original game content.
 
 This project is not affiliated with Activision or Treyarch.
+
+## Data-driven level support (v0.2 development)
+
+For an **already exported, authorized glTF scene** annotated with
+`SPAWN_PLAYER` (eye-height position), `COL_*` static collision meshes and
+`TARGET_*` test targets, run:
+
+~~~bash
+python3 Tools/build_level.py /path/to/scene.glb Assets --name "Test Level"
+~~~
+
+Creates `Assets/scene.rvn` and `Assets/scene.level.json`.
+The runtime loads matching metadata from the application bundle and applies
+the player spawn, world-space AABB collision and targets. Rotated collision
+meshes are approximated conservatively as axis-aligned boxes. This does not
+decode T5 fastfiles; proprietary map extraction must happen separately.
+Missing `scene.level.json` loads the scene only, with no fabricated collision.
+
+The importer does **not** yet support texture materials, animated entities,
+triangle-mesh collision, AI navigation or the original Black Ops map format.

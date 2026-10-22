@@ -1,5 +1,6 @@
 """Generate an original uncopyrighted geometry stress scene for the Metal loader."""
 from pathlib import Path
+import json
 from gltf_to_raven import write_scene
 
 vertices, indices = [], []
@@ -25,5 +26,17 @@ box(-4,.75,-11, 3,1.5,2,(.57,.42,.23))
 box(5,1,-14, 2,2,3,(.48,.58,.53))
 box(0,1,-5.5, 1,2,1,(.81,.26,.20))
 if __name__ == '__main__':
-    write_scene(Path(__file__).resolve().parents[1]/'Assets/demo.rvn',vertices,indices)
-    print('Wrote original geometric test scene.')
+    asset_dir = Path(__file__).resolve().parents[1] / 'Assets'
+    write_scene(asset_dir / 'demo.rvn', vertices, indices)
+    def bounds(x, y, z, sx, sy, sz):
+        return {'min': [x-sx/2, y-sy/2, z-sz/2], 'max': [x+sx/2, y+sy/2, z+sz/2]}
+    metadata = {
+        'schemaVersion': 1, 'name': 'Original diagnostic range',
+        'playerSpawn': [0, 1.65, 4],
+        'boxes': [bounds(-16,2,-2,.5,4,50), bounds(16,2,-2,.5,4,50),
+                  bounds(0,2,-27,32,4,.5), bounds(-4,.75,-11,3,1.5,2),
+                  bounds(5,1,-14,2,2,3)],
+        'targets': [bounds(0,1,-5.5,1,2,1)]
+    }
+    (asset_dir / 'demo.level.json').write_text(json.dumps(metadata, indent=2) + '\n')
+    print('Wrote original geometric test scene and sidecar.')

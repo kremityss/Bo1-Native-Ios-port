@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Swift simulation tests
         run: |
-          swiftc -Onone Engine/GameSimulation.swift Tests/SimulationTests.swift -o /tmp/bo1-tests
+          swiftc -Onone Engine/GameSimulation.swift Engine/LevelManifest.swift Tests/SimulationTests.swift -o /tmp/bo1-tests
           /tmp/bo1-tests
       - name: Python asset pipeline tests
         run: python3 -m unittest discover -s Tests -p '*Tests.py' -v

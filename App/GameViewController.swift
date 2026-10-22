@@ -6,7 +6,7 @@ final class GameViewController: UIViewController {
     private var metalView: MTKView!
     private var renderer: MetalRenderer?
     private let hud = UILabel()
-    private var lastStick = CGPoint.zero
+    private var levelName = "Test range"
 
     override var prefersStatusBarHidden: Bool { true }
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask { .landscape }
@@ -24,6 +24,21 @@ final class GameViewController: UIViewController {
            let scene = try? RavenScene.load(from: url) {
             renderer = MetalRenderer(view: metal, scene: scene)
         }
+        if let renderer {
+            let sceneName = Bundle.main.url(forResource: "scene", withExtension: "rvn") != nil ? "scene" : "demo"
+            if let metaURL = Bundle.main.url(forResource: sceneName, withExtension: "level.json"),
+               let data = try? Data(contentsOf: metaURL),
+               let level = try? JSONDecoder().decode(LevelManifest.self, from: data),
+               let world = try? level.makeSimulation() {
+                renderer.simulation = world
+                levelName = level.name
+            } else if sceneName == "scene" {
+                // Never silently reuse the sample-range collision in an imported map.
+                renderer.simulation.obstacles = []
+                renderer.simulation.targets = []
+                levelName = "Scene preview (no collision sidecar)"
+            }
+        }
         if renderer == nil {
             let label = UILabel(frame: view.bounds)
             label.text = "Metal or scene data unavailable — check the build logs"
@@ -35,7 +50,7 @@ final class GameViewController: UIViewController {
         }
         installControls()
         renderer?.onFrame = { [weak self] sim, fps in
-            self?.hud.text = String(format: "NATIVE METAL  |  %.0f FPS  |  %d / %d  |  Hits %d", fps,
+            self?.hud.text = String(format: "%@  |  %.0f FPS  |  %d / %d  |  Hits %d", self?.levelName ?? "Level", fps,
                                     sim.weapon.magazine, sim.weapon.reserve, sim.hits)
         }
     }
