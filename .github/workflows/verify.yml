@@ -20,6 +20,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: XcodeGen
         run: brew install xcodegen
+      - name: Generate original demo scene
+        run: python3 Tools/generate_demo.py
       - name: Generate native Xcode project
         run: xcodegen generate --spec project.yml
       - name: Build for iOS Simulator (unsigned)
@@ -43,6 +45,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
+      - name: Generate original demo scene
+        run: python3 Tools/generate_demo.py
       - run: xcodegen generate
       - name: Compile for physical iPhone (unsigned; must sign before installation)
         run: |
