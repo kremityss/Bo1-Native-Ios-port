@@ -135,7 +135,6 @@ final class GameViewController: UIViewController {
         guard let renderer else { return }
         if pan.state == .ended || pan.state == .cancelled {
             renderer.input.lateral = 0; renderer.input.forward = 0
-            lastStick = .zero
         } else {
             let offset = pan.translation(in: pan.view)
             renderer.input.lateral = Float(max(-1, min(1, offset.x/70)))
