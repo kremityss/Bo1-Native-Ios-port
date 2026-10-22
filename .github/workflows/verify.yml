@@ -1,0 +1,63 @@
+name: Verify native iOS foundation
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  engine-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Swift simulation tests
+        run: |
+          swiftc -Onone Engine/GameSimulation.swift Tests/SimulationTests.swift -o /tmp/bo1-tests
+          /tmp/bo1-tests
+      - name: Python asset pipeline tests
+        run: python3 -m unittest discover -s Tests -p '*Tests.py' -v
+  unsigned-simulator-build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: XcodeGen
+        run: brew install xcodegen
+      - name: Generate native Xcode project
+        run: xcodegen generate --spec project.yml
+      - name: Build for iOS Simulator (unsigned)
+        run: |
+          xcodebuild -project BO1NativeFoundation.xcodeproj \
+            -scheme BO1NativeFoundation \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Collect simulator .app
+        run: |
+          cd "$RUNNER_TEMP/DerivedData/Build/Products/Debug-iphonesimulator"
+          ditto -c -k --sequesterRsrc --keepParent BO1NativeFoundation.app "$GITHUB_WORKSPACE/BO1NativeFoundation-simulator.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bo1-native-simulator-app
+          path: BO1NativeFoundation-simulator.zip
+  device-build-unsigned:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Compile for physical iPhone (unsigned; must sign before installation)
+        run: |
+          xcodebuild -project BO1NativeFoundation.xcodeproj \
+            -scheme BO1NativeFoundation -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO build
+      - name: Package unsigned app bundle
+        run: |
+          cd "$RUNNER_TEMP/DerivedData/Build/Products/Release-iphoneos"
+          mkdir -p Payload
+          cp -R BO1NativeFoundation.app Payload/
+          zip -qr "$GITHUB_WORKSPACE/BO1NativeFoundation-unsigned.ipa" Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bo1-native-unsigned-iphone-ipa
+          path: BO1NativeFoundation-unsigned.ipa
